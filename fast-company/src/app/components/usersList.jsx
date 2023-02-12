@@ -13,11 +13,11 @@ const UsersList = () => {
     const [selectedProf, setSelectedProf] = useState();
     const [sortBy, setSortBy] = useState({ path: "name", order: "asc" });
     const pageSize = 8;
-
     const [users, setUsers] = useState();
     useEffect(() => {
         api.users.fetchAll().then((data) => setUsers(data));
     }, []);
+
     const handleDelete = (userId) => {
         setUsers(users.filter((user) => user._id !== userId));
     };
@@ -69,7 +69,7 @@ const UsersList = () => {
         const clearFilter = () => {
             setSelectedProf();
         };
-
+        console.log("selectedProf", selectedProf);
         return (
             <div className="d-flex">
                 {professions && (
@@ -90,6 +90,7 @@ const UsersList = () => {
                 )}
                 <div className="d-flex flex-column">
                     <SearchStatus length={count} />
+                    {/* <SearchUsers handeleSearch={handeleSearch} /> */}
                     {count > 0 && (
                         <UserTable
                             users={usersCrop}
@@ -97,6 +98,7 @@ const UsersList = () => {
                             selectedSort={sortBy}
                             onDelete={handleDelete}
                             onToggleBookMark={handleToggleBookMark}
+                            selectedProf={selectedProf}
                         />
                     )}
                     <div className="d-flex justify-content-center">

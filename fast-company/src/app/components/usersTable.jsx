@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-
+import SearchUsers from "./searchUsers";
 import BookMark from "./bookmark";
 import QualitiesList from "./qualitiesList";
 import Table from "./table";
@@ -12,8 +12,24 @@ const UserTable = ({
     selectedSort,
     onToggleBookMark,
     onDelete,
+    selectedProf,
     ...rest
 }) => {
+    const [search, setSearch] = useState("");
+
+    const handeleSearch = (e) => {
+        console.log("search", search);
+        setSearch(e.target.value);
+    };
+
+    const filteredSearch = users.filter((user) => {
+        return user.name.toLowerCase().includes(search.toLowerCase());
+    });
+
+    useEffect(() => {
+        setSearch("");
+    }, [selectedProf]);
+
     const columns = {
         name: {
             path: "name",
@@ -54,12 +70,15 @@ const UserTable = ({
         }
     };
     return (
-        <Table
-            onSort={onSort}
-            selectedSort={selectedSort}
-            columns={columns}
-            data={users}
-        />
+        <>
+            <SearchUsers handeleSearch={handeleSearch} />
+            <Table
+                onSort={onSort}
+                selectedSort={selectedSort}
+                columns={columns}
+                data={filteredSearch}
+            />
+        </>
     );
 };
 
@@ -68,7 +87,8 @@ UserTable.propTypes = {
     onSort: PropTypes.func.isRequired,
     selectedSort: PropTypes.object.isRequired,
     onToggleBookMark: PropTypes.func.isRequired,
-    onDelete: PropTypes.func.isRequired
+    onDelete: PropTypes.func.isRequired,
+    selectedProf: PropTypes.object.isRequired
 };
 
 export default UserTable;
