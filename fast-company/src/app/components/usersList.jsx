@@ -5,6 +5,7 @@ import Pagination from "./pagination";
 import api from "../api";
 import GroupList from "./groupList";
 import SearchStatus from "./searchStatus";
+import SearchUsers from "./searchUsers";
 import UserTable from "./usersTable";
 import _ from "lodash";
 const UsersList = () => {
@@ -14,6 +15,7 @@ const UsersList = () => {
     const [sortBy, setSortBy] = useState({ path: "name", order: "asc" });
     const pageSize = 8;
     const [users, setUsers] = useState();
+    const [search, setSearch] = useState("");
     useEffect(() => {
         api.users.fetchAll().then((data) => setUsers(data));
     }, []);
@@ -39,7 +41,17 @@ const UsersList = () => {
         setCurrentPage(1);
     }, [selectedProf]);
 
+    const handeleSearch = (e) => {
+        console.log("search", search);
+        setSearch(e.target.value);
+    };
+
+    // const filteredSearch = users.filter((user) => {
+    //     return user.name.toLowerCase().includes(search.toLowerCase());
+    // });
+
     const handleProfessionSelect = (item) => {
+        setSearch("");
         setSelectedProf(item);
     };
 
@@ -51,7 +63,11 @@ const UsersList = () => {
     };
 
     if (users) {
-        const filteredUsers = selectedProf
+        const filteredUsers = search
+            ? users.filter((user) => {
+                  return user.name.toLowerCase().includes(search.toLowerCase());
+              })
+            : selectedProf
             ? users.filter(
                   (user) =>
                       JSON.stringify(user.profession) ===
@@ -69,7 +85,7 @@ const UsersList = () => {
         const clearFilter = () => {
             setSelectedProf();
         };
-        console.log("selectedProf", selectedProf);
+        // console.log("selectedProf", selectedProf);
         return (
             <div className="d-flex">
                 {professions && (
@@ -90,7 +106,10 @@ const UsersList = () => {
                 )}
                 <div className="d-flex flex-column">
                     <SearchStatus length={count} />
-                    {/* <SearchUsers handeleSearch={handeleSearch} /> */}
+                    <SearchUsers
+                        search={search}
+                        handeleSearch={handeleSearch}
+                    />
                     {count > 0 && (
                         <UserTable
                             users={usersCrop}
@@ -98,7 +117,7 @@ const UsersList = () => {
                             selectedSort={sortBy}
                             onDelete={handleDelete}
                             onToggleBookMark={handleToggleBookMark}
-                            selectedProf={selectedProf}
+                            // filteredSearch={filteredSearch}
                         />
                     )}
                     <div className="d-flex justify-content-center">
