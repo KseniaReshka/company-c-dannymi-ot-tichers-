@@ -7,39 +7,40 @@ const SelectField = ({
     onChange,
     defaultOption,
     options,
-    error
+    error,
+    name
 }) => {
+    const handleChange = ({ target }) => {
+        onChange({ name: target.name, value: target.value });
+    };
     const getInputClasses = () => {
         return "form-select" + (error ? " is-invalid" : "");
     };
 
     const optionsArray =
         !Array.isArray(options) && typeof options === "object"
-            ? Object.keys(options).map((optionName) => ({
-                  name: options[optionName].name,
-                  value: options[optionName]._id
-              }))
+            ? Object.values(options)
             : options;
+
     return (
-        <div className="md-4">
-            <label htmlFor="validationCustom04" className="form-label">
+        <div className="mb-4">
+            <label htmlFor={name} className="form-label">
                 {label}
             </label>
             <select
-                label="Выберете Вашу профессию"
-                className={getInputClasses}
-                id="validationCustom04"
-                name="profession"
+                className={getInputClasses()}
+                id={name}
+                name={name}
                 value={value}
-                onChange={onChange}
+                onChange={handleChange}
             >
                 <option disabled value="">
                     {defaultOption}
                 </option>
-                {optionsArray &&
-                    optionsArray.map((profesName) => (
-                        <option value={profesName.value} key={profesName.value}>
-                            {profesName.name}
+                {optionsArray.length > 0 &&
+                    optionsArray.map((option) => (
+                        <option value={option.value} key={option.value}>
+                            {option.label}
                         </option>
                     ))}
             </select>
@@ -47,13 +48,15 @@ const SelectField = ({
         </div>
     );
 };
+
 SelectField.propTypes = {
+    defaultOption: PropTypes.string,
     label: PropTypes.string,
     value: PropTypes.string,
     onChange: PropTypes.func,
-    defaultOption: PropTypes.string,
+    error: PropTypes.string,
     options: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
-    error: PropTypes.string
+    name: PropTypes.string
 };
 
 export default SelectField;
