@@ -5,27 +5,40 @@ import TextField from "../../common/form/textField";
 import SelectField from "../../common/form/selectField";
 import RadioField from "../../common/form/radioField";
 import MultiSelectField from "../../common/form/multiSelectField";
-import CheckBoxField from "../../common/form/checkBoxField";
+// import CheckBoxField from "../../common/form/checkBoxField";
 
 const UserForm = () => {
     const history = useHistory();
     const { userId } = useParams();
-    const [user, setUser] = useState();
-    useEffect(() => {
-        api.users.getById(userId).then((data) => setUser(data));
-    }, []);
-    // console.log("userId", userId);
-    // console.log("user", user);
-    // console.log("name", user.name);
-
-    const [data, setData] = useState({
-        name: "`${user.name}`",
+    const [user, setUser] = useState({
+        name: "",
         email: "",
         profession: "",
         sex: "male",
-        qualities: [],
-        licence: false
+        qualities: []
     });
+    useEffect(() => {
+        api.users.getById(userId).then((data) =>
+            setUser((prevState) => ({
+                ...prevState,
+                ...data,
+                qualities: data.qualities.map((qual) => {
+                    console.log("qual", qual);
+                    return {
+                        label: qual.name,
+                        value: qual._id
+                    };
+                }),
+                profession: Object.keys(data).map((prof) => {
+                    console.log("prof", data[prof]);
+                    return {
+                        label: data[prof].name,
+                        value: data[prof]._id
+                    };
+                })
+            }))
+        );
+    }, []);
     const [qualities, setQualities] = useState([]);
     const [professions, setProfession] = useState([]);
 
@@ -70,26 +83,26 @@ const UserForm = () => {
         });
     }, []);
     const handleChange = (target) => {
-        setData((prevState) => ({
+        setUser((prevState) => ({
             ...prevState,
             [target.name]: target.value
         }));
     };
     const handleSubmit = (e) => {
         e.preventDefault();
-        const { profession, qualities } = data;
+        const { profession, qualities } = user;
         console.log({
-            ...data,
+            ...user,
             profession: getProfessionById(profession),
             qualities: getQualities(qualities)
         });
     };
 
     const handleParams = () => {
-        console.log(useParams());
+        api.users.update(userId, user);
         history.push(`/users/${userId}`);
     };
-
+    console.log("user", user);
     if (user) {
         return (
             <div>
@@ -98,23 +111,23 @@ const UserForm = () => {
                         label="Имя"
                         type="name"
                         name="name"
-                        value={data.name}
+                        value={user.name}
                         onChange={handleChange}
                     />
                     <TextField
                         label="Электронная почта"
+                        type="email"
                         name="email"
-                        value={data.email}
+                        value={user.email}
                         onChange={handleChange}
                     />
-
                     <SelectField
                         label="Выбери свою профессию"
                         defaultOption="Choose..."
                         options={professions}
                         name="profession"
                         onChange={handleChange}
-                        value={data.profession}
+                        value={user.profession}
                     />
                     <RadioField
                         options={[
@@ -122,7 +135,7 @@ const UserForm = () => {
                             { name: "Female", value: "female" },
                             { name: "Other", value: "other" }
                         ]}
-                        value={data.sex}
+                        value={user.sex}
                         name="sex"
                         onChange={handleChange}
                         label="Выберите ваш пол"
@@ -130,24 +143,17 @@ const UserForm = () => {
                     <MultiSelectField
                         options={qualities}
                         onChange={handleChange}
-                        defaultValue={data.qualities}
+                        defaultValue={user.qualities}
                         name="qualities"
                         label="Выберите ваши качества"
                     />
-                    <CheckBoxField
-                        value={data.licence}
-                        onChange={handleChange}
-                        name="licence"
-                    >
-                        Подтвердить <a>лицензионное соглашение</a>
-                    </CheckBoxField>
                     <button
                         className="btn btn-primary w-100 mx-auto"
                         type="submit"
                         onClick={handleParams}
                         // disabled={!isValid}
                     >
-                        Submit
+                        обновить
                     </button>
                 </form>
             </div>
