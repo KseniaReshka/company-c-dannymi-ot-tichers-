@@ -1,12 +1,15 @@
 import React, { useContext, useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import userService from "../services/user.service";
 import { toast } from "react-toastify";
 import axios from "axios";
-import { setTokens } from "../services/localStorage.service";
-// import localStorageService from "../services/localStorage.service";
+import userService from "../services/user.service";
+import localStorageService, {
+    setTokens
+} from "../services/localStorage.service";
+import { useHistory } from "react-router-dom";
 
-const httpAuth = axios.create();
+export const httpAuth = axios.create();
+
 const AuthContext = React.createContext();
 
 export const useAuth = () => {
@@ -14,10 +17,47 @@ export const useAuth = () => {
 };
 
 const AuthProvider = ({ children }) => {
-    const [setUser] = useState({});
-    // currentUser,const [isLoading, setLoading] = useState(true);
+    const [currentUser, setUser] = useState();
     const [error, setError] = useState(null);
+    const [isLoading, setLoading] = useState(true);
+    const history = useHistory();
 
+    async function logIn({ email, password }) {
+        const key = "AIzaSyDz2E8Obfez2uUAHJxBJuANHsFnNTdlSu4";
+        const url = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${key}`;
+        try {
+            const { data } = await httpAuth.post(url, {
+                email,
+                password,
+                returnSecureToken: true
+            });
+            setTokens(data);
+            await getUserData();
+        } catch (error) {
+            errorCatcher(error);
+            const { code, message } = error.response.data.error;
+            console.log(code, message);
+            if (code === 400) {
+                switch (message) {
+                    case "INVALID_PASSWORD":
+                        throw new Error("Email или пароль введены некорректно");
+
+                    default:
+                        throw new Error(
+                            "Слишком много попыток входа. Попробуйте позже"
+                        );
+                }
+            }
+        }
+    }
+    function logOut() {
+        localStorageService.removeAuthData();
+        setUser(null);
+        history.push("/");
+    }
+    function randomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1) + min);
+    }
     async function signUp({ email, password, ...rest }) {
         const key = "AIzaSyDz2E8Obfez2uUAHJxBJuANHsFnNTdlSu4";
         const url = `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${key}`;
@@ -29,87 +69,46 @@ const AuthProvider = ({ children }) => {
                 returnSecureToken: true
             });
             setTokens(data);
-
-            await createUser({ _id: data.localId, email, ...rest });
-            console.log("data", data);
+            await createUser({
+                _id: data.localId,
+                email,
+                rate: randomInt(1, 5),
+                completedMeetings: randomInt(0, 200),
+                image: `https://avatars.dicebear.com/api/avataaars/${(
+                    Math.random() + 1
+                )
+                    .toString(36)
+                    .substring(7)}.svg`,
+                ...rest
+            });
         } catch (error) {
             errorCatcher(error);
             const { code, message } = error.response.data.error;
-            console.log("message", message);
+            console.log(code, message);
             if (code === 400) {
                 if (message === "EMAIL_EXISTS") {
                     const errorObject = {
-                        email: "Пoльзователь с таким email уже существует"
+                        email: "Пользователь с таким Email уже существует"
                     };
                     throw errorObject;
                 }
             }
         }
     }
-
-    async function logIn({ email, password, ...rest }) {
-        const key = "AIzaSyDz2E8Obfez2uUAHJxBJuANHsFnNTdlSu4";
-        const url = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${key}`;
-
-        try {
-            const { data } = await httpAuth.post(url, {
-                email,
-                password,
-                returnSecureToken: true
-            });
-            console.log("data1", data);
-            // const { getAccessToken } = localStorageService();
-            // const accessToken = getAccessToken();
-            // console.log("AccessToken", accessToken);
-            await getUser({ _id: data.localId });
-        } catch (error) {
-            errorCatcher(error);
-            const { code, message } = error.response.data.error;
-            console.log("message", message);
-            if (code === 400) {
-                let errorObject;
-                if (message === "INVALID_PASSWORD") {
-                    errorObject = {
-                        password: "неверный пароль"
-                    };
-                }
-                if (message === "EMAIL_NOT_FOUND") {
-                    errorObject = {
-                        email: "Пoльзователя с таким email не существует"
-                    };
-                    // <RegisterForm />;
-                }
-                throw errorObject;
-            }
-        }
-    }
-    async function getUser(_id) {
-        console.log(_id);
-        try {
-            const { content } = await userService.get(_id);
-            console.log("content", content);
-            setUser(content);
-            history.push("/");
-        } catch (error) {
-            errorCatcher(error);
-        }
-    }
-
-    // const [users, setUsers] = useState([]);
-    // const [isLoading, setLoading] = useState(true);
-    // const [error, setError] = useState(null);
-    // useEffect(() => {
-    //     getUsers();
-    // }, []);
-    // useEffect(() => {
-    //     if (error !== null) {
-    //         toast(error);
-    //         setError(null);
-    //     }
-    // }, [error]);
     async function createUser(data) {
         try {
             const { content } = await userService.create(data);
+            console.log(content);
+            setUser(content);
+        } catch (error) {
+            errorCatcher(error);
+        }
+    }
+
+    async function apdateUser(data) {
+        try {
+            const { content } = await userService.apdateUser(data);
+            console.log(content);
             setUser(content);
         } catch (error) {
             errorCatcher(error);
@@ -119,16 +118,34 @@ const AuthProvider = ({ children }) => {
         const { message } = error.response.data;
         setError(message);
     }
+    async function getUserData() {
+        try {
+            const { content } = await userService.getCurrentUser();
+            setUser(content);
+        } catch (error) {
+            errorCatcher(error);
+        } finally {
+            setLoading(false);
+        }
+    }
+    useEffect(() => {
+        if (localStorageService.getAccessToken()) {
+            getUserData();
+        } else {
+            setLoading(false);
+        }
+    }, []);
     useEffect(() => {
         if (error !== null) {
             toast(error);
             setError(null);
         }
     }, [error]);
-
     return (
-        <AuthContext.Provider value={{ signUp, logIn, createUser }}>
-            {children}
+        <AuthContext.Provider
+            value={{ signUp, logIn, currentUser, logOut, apdateUser }}
+        >
+            {!isLoading ? children : "Loading..."}
         </AuthContext.Provider>
     );
 };

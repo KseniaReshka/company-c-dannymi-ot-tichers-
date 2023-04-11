@@ -34,13 +34,15 @@ export const ProfessionProvider = ({ children }) => {
     async function getProfessionsList() {
         try {
             const { content } = await ProfessionService.get();
+            console.log("contentP", content);
             setProfessions(content);
             setLoading(false);
         } catch (error) {
             errorCatcher(error);
         }
     }
-
+    // console.log("getProfessionsList", getProfessionsList());
+    // console.log("professions", professions);
     return (
         <ProfessionContext.Provider
             value={{ isLoading, professions, getProfession }}

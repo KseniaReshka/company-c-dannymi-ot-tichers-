@@ -15,17 +15,21 @@ export const QualitiesProvider = ({ children }) => {
     const [isLoading, setLoading] = useState(true);
 
     useEffect(() => {
-        const getQualities = async () => {
-            try {
-                const { content } = await qualityService.fetchAll();
-                setQualities(content);
-                setLoading(false);
-            } catch (error) {
-                errorCatcher(error);
-            }
-        };
-        getQualities();
+        console.log("11111");
+        getQualitLies();
     }, []);
+
+    async function getQualitLies() {
+        try {
+            const { content } = await qualityService.fetchAll();
+            console.log("contentQ", content);
+            setQualities(content);
+            setLoading(false);
+        } catch (error) {
+            errorCatcher(error);
+        }
+    }
+
     const getQuality = (id) => {
         return qualities.find((q) => q._id === id);
     };
@@ -40,7 +44,7 @@ export const QualitiesProvider = ({ children }) => {
             setError(null);
         }
     }, [error]);
-
+    console.log("qualitiesOfQ", qualities);
     return (
         <QualitiesContext.Provider
             value={{
