@@ -21,15 +21,10 @@ const userService = {
         );
         return data;
     },
-    apdateUser: async (content) => {
-        const { data } = await httpService.get(
-            userEndpoint + localStorageService.getUserId()
-        );
-        const apdateData=await httpService.put(
-            userEndpoint + data._id,[...data,content]
-            
-        )
-        return apdateData;
+    update: async (content) => {
+        const { data } = await httpService.patch(userEndpoint + localStorageService.getUserId(), content);
+
+        return data;
     }
 };
 export default userService;

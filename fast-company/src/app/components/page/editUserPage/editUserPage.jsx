@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useHistory, useParams } from "react-router-dom";
+import { useHistory } from "react-router-dom";
 import { validator } from "../../../utils/validator";
 import TextField from "../../common/form/textField";
 import SelectField from "../../common/form/selectField";
@@ -11,61 +11,51 @@ import { useQualities } from "../../../hooks/useQualities";
 import { useAuth } from "../../../hooks/useAuth";
 
 const EditUserPage = () => {
-    const { userId } = useParams();
-    const { currentUser } = useAuth();
-    const { professions, getProfession } = useProfessions();
-    const { qualities, getQuality } = useQualities();
+    // const { userId } = useParams();
+    const { professions, isLoading: professionIsLoading } = useProfessions();
+    const { qualities, isLoading: qualitiesIsLoading } = useQualities();
     const history = useHistory();
-    const [isLoading, setIsLoading] = useState(false);
-    const [data, setData] = useState({
-        name: "",
-        email: "",
-        profession: "",
-        sex: "male",
-        qualities: []
-    });
+    const [isLoading, setIsLoading] = useState(true);
+    const [data, setData] = useState();
     const [errors, setErrors] = useState({});
-    const { apdateUser } = useAuth();
+    const { currentUser, updateUser } = useAuth();
 
-    console.log("currentUser", currentUser);
-    console.log("professions", professions);
-    console.log("qualities", qualities);
-    console.log("userId", userId);
-    // console.log("data", data);
-    //
-    const idProfession = currentUser.profession;
-    const profUser = getProfession(idProfession);
-    const ProfList = (data) => ({
-        label: data.name,
-        value: data._id
-    });
-    console.log("profUser", profUser);
+    const professionsList = professions.map((prof) => ({ label: prof.name, value: prof._id }));
+    const qualitiesList = qualities.map((qual) => ({ label: qual.name, value: qual._id }));
+
+    const getQualitesById = (qualitArrIds) => {
+        const newArrQual = [];
+        for (const qualId of qualitArrIds) {
+            for (const qualitie of qualities) {
+                if (qualId === qualitie._id) {
+                    newArrQual.push(qualitie);
+                    break;
+                }
+            }
+        }
+        console.log(newArrQual, "newArrQual");
+        return newArrQual;
+    };
+
     useEffect(() => {
-        setData((prevState) => ({
-            ...prevState,
-            name: currentUser.name,
-            email: currentUser.email
-            // profession: profUser._id
-            // qualities: getQuality()
-        }));
+        if (currentUser && !professionIsLoading && !qualitiesIsLoading) {
+            setData((prev) => ({ ...currentUser, qualities: getQualitesById(currentUser.qualities).map((qual) => ({ label: qual.name, value: qual._id })) }));
+        }
+    }, [currentUser, professionIsLoading, qualitiesIsLoading]);
 
-        console.log("data", data);
-    }, []);
-    // const professionsList = {
-    //     label: profUser.name,
-    //     value: profUser._id
-    // };
     const handleSubmit = async (e) => {
         e.preventDefault();
         const isValid = validate();
         if (!isValid) return;
         try {
-            await apdateUser(newData);
-            history.push(`/users/${data._id}`);
+            await updateUser({ ...data, qualities: data.qualities.map((qual) => qual.value) });
+            history.push(`/users/${currentUser._id}`);
         } catch (error) {
             setErrors(error);
         }
     };
+
+    console.log(data);
 
     const validatorConfig = {
         email: {
@@ -92,6 +82,13 @@ const EditUserPage = () => {
         }));
         console.log("data", data);
     };
+
+    useEffect(() => {
+        if (data && isLoading) {
+            setIsLoading(false);
+        }
+    }, [data]);
+
     const validate = () => {
         const errors = validator(data, validatorConfig);
         setErrors(errors);
@@ -122,7 +119,7 @@ const EditUserPage = () => {
                             <SelectField
                                 label="Выбери свою профессию"
                                 defaultOption="Choose..."
-                                options={professions}
+                                options={professionsList}
                                 name="profession"
                                 onChange={handleChange}
                                 value={data.profession}
@@ -141,7 +138,7 @@ const EditUserPage = () => {
                             />
                             <MultiSelectField
                                 defaultValue={data.qualities}
-                                options={qualities}
+                                options={qualitiesList}
                                 onChange={handleChange}
                                 name="qualities"
                                 label="Выберите ваши качества"
