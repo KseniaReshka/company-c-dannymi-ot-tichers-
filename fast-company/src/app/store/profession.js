@@ -37,12 +37,13 @@ function isOutdated(date) {
 }
 
 export const loadProffessionsList = () => async (dispatch, getState) => {
-    const { lastFetch } = getState().proffessions;
+    const { lastFetch } = getState().professions;
     if (isOutdated(lastFetch)) {
         console.log(lastFetch);
         dispatch(professionsRequested());
         try {
             const { content } = await professionService.get();
+            console.log("content",content)
             dispatch(professionsReceived(content));
         } catch (error) {
             dispatch(professionsRequestFailed(error.message));

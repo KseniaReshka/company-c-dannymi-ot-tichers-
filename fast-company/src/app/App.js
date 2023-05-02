@@ -10,14 +10,16 @@ import NavBar from "./components/ui/navBar";
 import AuthProvider from "./hooks/useAuth";
 import ProtectedRoute from "./components/common/protectedRoute";
 import LogOut from "./layouts/logOut";
-import {useDispatch} from "react-redux"
+import { useDispatch } from "react-redux";
 import { loadQualitiesList } from "./store/qualities";
+import { loadProffessionsList } from "./store/profession";
 
 function App() {
-    const dispatch=useDispatch()
-    useEffect(()=>{
-        dispatch(loadQualitiesList())
-    },[])
+    const dispatch = useDispatch();
+    useEffect(() => {
+        dispatch(loadQualitiesList());
+        dispatch(loadProffessionsList());
+    }, []);
     return (
         <div>
             <AuthProvider>
