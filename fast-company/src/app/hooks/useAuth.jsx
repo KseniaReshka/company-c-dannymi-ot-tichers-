@@ -8,8 +8,12 @@ import localStorageService, {
 } from "../services/localStorage.service";
 import { useHistory } from "react-router-dom";
 
-export const httpAuth = axios.create();
-
+export const httpAuth = axios.create({
+    baseURL: "https://identitytoolkit.googleapis.com/v1/",
+    params: {
+        key: "AIzaSyDz2E8Obfez2uUAHJxBJuANHsFnNTdlSu4"
+    }
+});
 const AuthContext = React.createContext();
 
 export const useAuth = () => {
@@ -23,14 +27,15 @@ const AuthProvider = ({ children }) => {
     const history = useHistory();
 
     async function logIn({ email, password }) {
-        const key = "AIzaSyDz2E8Obfez2uUAHJxBJuANHsFnNTdlSu4";
-        const url = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${key}`;
         try {
-            const { data } = await httpAuth.post(url, {
-                email,
-                password,
-                returnSecureToken: true
-            });
+            const { data } = await httpAuth.post(
+                `accounts:signInWithPassword`,
+                {
+                    email,
+                    password,
+                    returnSecureToken: true
+                }
+            );
             setTokens(data);
             await getUserData();
         } catch (error) {
@@ -58,12 +63,17 @@ const AuthProvider = ({ children }) => {
     function randomInt(min, max) {
         return Math.floor(Math.random() * (max - min + 1) + min);
     }
-    async function signUp({ email, password, ...rest }) {
-        const key = "AIzaSyDz2E8Obfez2uUAHJxBJuANHsFnNTdlSu4";
-        const url = `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${key}`;
-
+    async function updateUserData(data) {
         try {
-            const { data } = await httpAuth.post(url, {
+            const { content } = await userService.update(data);
+            setUser(content);
+        } catch (error) {
+            errorCatcher(error);
+        }
+    }
+    async function signUp({ email, password, ...rest }) {
+        try {
+            const { data } = await httpAuth.post(`accounts:signUp`, {
                 email,
                 password,
                 returnSecureToken: true
@@ -104,16 +114,6 @@ const AuthProvider = ({ children }) => {
             errorCatcher(error);
         }
     }
-
-    async function updateUser(data) {
-        try {
-            const { content } = await userService.update(data);
-            console.log(content);
-            setUser(content);
-        } catch (error) {
-            errorCatcher(error);
-        }
-    }
     function errorCatcher(error) {
         const { message } = error.response.data;
         setError(message);
@@ -143,7 +143,7 @@ const AuthProvider = ({ children }) => {
     }, [error]);
     return (
         <AuthContext.Provider
-            value={{ signUp, logIn, currentUser, logOut, updateUser }}
+            value={{ signUp, logIn, currentUser, logOut, updateUserData }}
         >
             {!isLoading ? children : "Loading..."}
         </AuthContext.Provider>

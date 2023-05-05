@@ -6,10 +6,8 @@ import SelectField from "../../common/form/selectField";
 import RadioField from "../../common/form/radioField";
 import MultiSelectField from "../../common/form/multiSelectField";
 import BackHistoryButton from "../../common/backButton";
-// import { useProfessions } from "../../../hooks/useProfession";
-// import { useQualities } from "../../../hooks/useQualities";
-import { useAuth } from "../../../hooks/useAuth";
-import { useSelector } from "react-redux";
+// import { useAuth } from "../../../hooks/useAuth";
+import { useDispatch, useSelector } from "react-redux";
 import {
     getQualities,
     getQualitiesLoadingStatus
@@ -17,26 +15,22 @@ import {
 import {
     getProfessions,
     getProfessionsLoadingStatus
-} from "../../../store/profession";
+} from "../../../store/professions";
+import { getCurrentUserData, updateUserData } from "../../../store/users";
 
 const EditUserPage = () => {
-    // const { userId } = useParams();
-    // const { professions, isLoading: professionIsLoading } = useProfessions();
-    // const { qualities, isLoading: qualitiesIsLoading } = useQualities();
     const history = useHistory();
     const [isLoading, setIsLoading] = useState(true);
     const [data, setData] = useState();
-    const { currentUser, updateUserData } = useAuth();
+    const dispatch = useDispatch();
+    const currentUser = useSelector(getCurrentUserData());
     const qualities = useSelector(getQualities());
     const qualitiesLoading = useSelector(getQualitiesLoadingStatus());
     const qualitiesList = qualities.map((q) => ({
         label: q.name,
         value: q._id
     }));
-    // const { professions, isLoading: professionLoading } = useProfessions();
     const professions = useSelector(getProfessions());
-    console.log("qualities1111", qualities);
-    console.log("professions111", professions);
     const professionLoading = useSelector(getProfessionsLoadingStatus());
     const professionsList = professions.map((p) => ({
         label: p.name,
@@ -48,10 +42,12 @@ const EditUserPage = () => {
         e.preventDefault();
         const isValid = validate();
         if (!isValid) return;
-        await updateUserData({
-            ...data,
-            qualities: data.qualities.map((q) => q.value)
-        });
+        dispatch(
+            updateUserData({
+                ...data,
+                qualities: data.qualities.map((q) => q.value)
+            })
+        );
 
         history.push(`/users/${currentUser._id}`);
     };
