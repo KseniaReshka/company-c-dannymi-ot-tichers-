@@ -1,6 +1,6 @@
 import { createAction, createSlice } from "@reduxjs/toolkit";
 import commentService from "../services/comment.service";
-import { nanoid } from "nanoid";
+
 
 const commentsSlice = createSlice({
     name: "comments",
@@ -33,10 +33,10 @@ const commentsSlice = createSlice({
 const { reducer: commentsReducer, actions } = commentsSlice;
 const { commentsRequested, commentsReceived, commentsRequestFailed, commentRemove, commentCreate } = actions;
 
-// const commentCreateRequested = createAction("comments/commentCreateRequested");
-// const createCommentFailed = createAction("comments/createCommentFailed");
-// const commentRemoveRequested = createAction("comments/commentRemoveRequested");
-// const removeCommentFailed = createAction("comments/removeCommentFailed");
+const commentCreateRequested = createAction("comments/commentCreateRequested");
+const createCommentFailed = createAction("comments/createCommentFailed");
+const commentRemoveRequested = createAction("comments/commentRemoveRequested");
+const removeCommentFailed = createAction("comments/removeCommentFailed");
 
 export const loadCommentsList = (userId) => async (dispatch) => {
     dispatch(commentsRequested());
@@ -49,29 +49,31 @@ export const loadCommentsList = (userId) => async (dispatch) => {
 };
 
 export const removeComments = (id) => async (dispatch) => {
-    // dispatch(commentRemoveRequested())
+    dispatch(commentRemoveRequested())
     try {
         const { content } = await commentService.removeComment(id);
           dispatch(commentRemove(content));
     } catch (error) {
-    //    dispatch(removeCommentFailed(error.message))
+       dispatch(removeCommentFailed(error.message))
     }
 };
 
-export const createComments = (data, currentUserId, userId) => async (dispatch) => {
-    const comment = {
-        ...data,
-        _id: nanoid(),
-        pageId: userId,
-        created_at: Date.now(),
-        userId: currentUserId
-    };
-    // dispatch(commentCreateRequested())
+export const createComments = (data) => async (dispatch) => {
+    console.log("dataNew", data);
+ 
+    // const comment = {
+    //     ...data,
+    //     _id: nanoid(),
+    //     pageId: userId,
+    //     created_at: Date.now(),
+    //     userId: currentUserId
+    // };
+    dispatch(commentCreateRequested())
     try {
-        const { content } = await commentService.createComment(comment);
+        const { content } = await commentService.createComment(data);
           dispatch(commentCreate(content));
     } catch (error) {
-        // dispatch(createCommentFailed(error.message))
+     dispatch(createCommentFailed(error.message))
     }
 };
 

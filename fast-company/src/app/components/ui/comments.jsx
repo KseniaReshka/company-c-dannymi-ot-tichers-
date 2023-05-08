@@ -12,6 +12,7 @@ import {
 } from "../../store/comments";
 import { useParams } from "react-router-dom";
 import { getCurrentUserId } from "../../store/users";
+import { nanoid } from "nanoid";
 
 const Comments = () => {
     const { userId } = useParams();
@@ -21,15 +22,26 @@ const Comments = () => {
         dispatch(loadCommentsList(userId));
     }, [userId]);
     const isLoading = useSelector(getCommentsLoadingStatus());
-    const createComment = createComments();
-    const removeComment = removeComments();
+    // const createComment = createComments();
+    // const removeComment = removeComments();
     const comments = useSelector(getComments());
 
     const handleSubmit = (data) => {
-        createComment(data, userId, currentUserId);
+        console.log("data", data);
+        console.log("currentUserId", currentUserId);
+        console.log("userId", userId);
+        const comment = {
+            ...data,
+            _id: nanoid(),
+            pageId: userId,
+            created_at: Date.now(),
+            userId: currentUserId
+        };
+        console.log("comment", comment);
+        dispatch(createComments(comment));
     };
     const handleRemoveComment = (id) => {
-        removeComment(id);
+        dispatch(removeComments(id));
     };
     const sortedComments = orderBy(comments, ["created_at"], ["desc"]);
     return (
